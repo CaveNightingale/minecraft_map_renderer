@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Minecraft map</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; height: 100dvh; display: flex; flex-direction: column; background: #111820; color: #e1e8ed; font: 14px system-ui, sans-serif; }
+    header { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; padding: 14px 20px; background: #1c2833; border-bottom: 1px solid #344450; }
+    h1 { margin: 0; font-size: 18px; }
+    form { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+    input { width: 90px; }
+    input, button { padding: 6px 9px; color: inherit; background: #273947; border: 1px solid #4b6475; border-radius: 4px; }
+    button { cursor: pointer; }
+    button:disabled { opacity: .5; cursor: default; }
+    :focus-visible { outline: 2px solid #72c6ee; outline-offset: 2px; }
+    #viewport { flex: 1; min-height: 0; background-color: #131c24; background-image: linear-gradient(45deg, #1d2933 25%, transparent 25%, transparent 75%, #1d2933 75%), linear-gradient(45deg, #1d2933 25%, transparent 25%, transparent 75%, #1d2933 75%); background-size: 24px 24px; background-position: 0 0, 12px 12px; }
+    canvas { display: block; width: 100%; height: 100%; }
+    footer { padding: 10px 20px; display: flex; gap: 20px; flex-wrap: wrap; border-top: 1px solid #344450; }
+    #position { font-variant-numeric: tabular-nums; margin-left: auto; }
+    #error { background: #6b2027; padding: 12px 20px; overflow-wrap: anywhere; }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Minecraft map</h1>
+    <form id="jump">
+      <label>X <input id="x" type="number" value="1024" step="any" required></label>
+      <label>Z <input id="z" type="number" value="1024" step="any" required></label>
+      <button id="go" disabled>Go</button>
+    </form>
+    <button id="out" type="button" aria-label="Zoom out" disabled>-</button>
+    <button id="in" type="button" aria-label="Zoom in" disabled>+</button>
+    <span>Drag to pan / scroll to zoom</span>
+  </header>
+  <div id="error" role="alert" hidden></div>
+  <main id="viewport"><canvas id="map" aria-label="Minecraft world map"></canvas></main>
+  <footer>
+    <span id="status" role="status">Loading index...</span>
+    <span>Checkerboard = transparent / void; red cross = failed tile</span>
+    <output id="position"></output>
+  </footer>
+  <script type="module">
+    import { Map } from "/dist/index.js";
+
+    const canvas = document.querySelector("#map");
+    const status = document.querySelector("#status");
+    const errorBox = document.querySelector("#error");
+    const position = document.querySelector("#position");
+    const map = new Map("/map");
+    const range = { min: 0.125, max: 8 };
+    const updatePosition = () => {
+      const view = map.view;
+      position.textContent = `X ${view.x.toFixed(1)} / Z ${view.y.toFixed(1)} / ${view.scale.toFixed(2)}x`;
+      document.querySelector("#out").disabled = view.scale <= range.min;
+      document.querySelector("#in").disabled = view.scale >= range.max;
+    };
+    const showError = (error) => {
+      errorBox.hidden = false;
+      errorBox.textContent = error.message;
+      status.textContent = "Load failed";
+    };
+    map.addEventListener("error", (event) => showError(event.error));
+    map.addEventListener("viewchange", () => {
+      status.textContent = "Updating view...";
+      updatePosition();
+    });
+    map.addEventListener("load", () => {
+      errorBox.hidden = true;
+      status.textContent = "Visible tiles loaded";
+      updatePosition();
+    });
+    document.querySelector("#jump").addEventListener("submit", (event) => {
+      event.preventDefault();
+      try {
+        map.setView({
+          x: Number(document.querySelector("#x").value),
+          y: Number(document.querySelector("#z").value),
+        });
+      } catch (error) {
+        showError(error);
+      }
+    });
+    for (const [id, factor] of [["in", 2], ["out", 0.5]]) {
+      document.getElementById(id).addEventListener("click", () => {
+        const view = map.view;
+        map.setView(view, Math.min(range.max, Math.max(range.min, view.scale * factor)));
+      });
+    }
+    window.addEventListener("pagehide", () => map.destroy(), { once: true });
+    try {
+      await map.render(canvas, {
+        initialPosition: { x: 1024, y: 1024 },
+        initialScale: Math.max(range.min, Math.min(1, canvas.clientWidth / 2048, canvas.clientHeight / 2048)),
+        scaleRange: range,
+      });
+      document.querySelector("#go").disabled = false;
+      updatePosition();
+    } catch (error) {
+      showError(error);
+    }
+  </script>
+</body>
+</html>

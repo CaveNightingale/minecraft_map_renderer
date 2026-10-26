@@ -1,0 +1,26 @@
+{
+  "name": "minecraft-map-renderer",
+  "version": "0.1.0",
+  "description": "Canvas viewer for Minecraft map-color tiles",
+  "type": "module",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": ["dist", "README.md"],
+  "sideEffects": false,
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test test/*.test.mjs && playwright test",
+    "prepack": "npm run build",
+    "example": "npm run build && node example/server.mjs"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.56.0",
+    "typescript": "^5.9.3"
+  }
+}

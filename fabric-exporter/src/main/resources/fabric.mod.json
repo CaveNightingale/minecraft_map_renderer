@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "minecraft_map_renderer_exporter",
+  "version": "${version}",
+  "name": "Minecraft Map Renderer Exporter",
+  "description": "Server-only block state and vanilla map reference exporter.",
+  "environment": "server",
+  "entrypoints": {
+    "server": ["dev.maprenderer.exporter.MapExporter"]
+  },
+  "mixins": ["maprenderer-exporter.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "26.1",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

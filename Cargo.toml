@@ -1,0 +1,30 @@
+[package]
+name = "minecraft_map_renderer"
+version = "0.1.0"
+edition = "2024"
+
+[[bin]]
+name = "minecraft-map-renderer"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0"
+clap = { version = "4.6", features = ["derive"] }
+indicatif = "0.18.6"
+libdeflater = "1.26"
+lz4-java-wrc = "0.2"
+rapidhash = "4.5.1"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha2 = "0.10"
+tinyvec = { version = "1.13.3", features = ["alloc"] }
+
+[dev-dependencies]
+flate2 = "1.1"
+tempfile = "3.27"
+
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 3
