@@ -99,7 +99,6 @@ async function inflate(payload: Uint8Array): Promise<Uint8Array> {
 export async function decodeTile(
   buffer: ArrayBuffer,
   tileSize: number,
-  hash: string,
 ): Promise<TileData> {
   const pixels = tileSize * tileSize;
   const chunksPerRow = tileSize / 16;
@@ -115,14 +114,6 @@ export async function decodeTile(
     view.getBigUint64(8, true) !== BigInt(tileSize)
   ) {
     throw new Error("Invalid tile magic, version or size");
-  }
-  if (!globalThis.crypto?.subtle) {
-    throw new Error("SHA-256 verification requires HTTPS or localhost (Web Crypto)");
-  }
-  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", buffer));
-  const actualHash = Array.from(digest, (byte) => byte.toString(16).padStart(2, "0")).join("");
-  if (actualHash !== hash) {
-    throw new Error(`Tile SHA-256 mismatch: expected ${hash}, got ${actualHash}`);
   }
   const payload = await inflate(new Uint8Array(buffer, 16));
   if (payload.length !== pixels + coverageLength) {

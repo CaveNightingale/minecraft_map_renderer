@@ -355,7 +355,7 @@ export class Map extends EventTarget {
     if (!response.ok) {
       throw new Error(`${url}: HTTP ${response.status}`);
     }
-    const { colors } = await decodeTile(await response.arrayBuffer(), index.tileSize, hash);
+    const { colors } = await decodeTile(await response.arrayBuffer(), index.tileSize);
     signal.throwIfAborted();
     const image = document.createElement("canvas");
     image.width = index.tileSize;

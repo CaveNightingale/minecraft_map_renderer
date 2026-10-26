@@ -45,39 +45,39 @@ test("decodes variable-sized tiles and coverage, including all unsigned color ID
     const coverage = Buffer.alloc(Math.ceil(chunks / 8));
     for (let i = 0; i < chunks; i++) coverage[i >> 3] |= 1 << (i & 7);
     const data = encodeTile(size, colors, coverage);
-    const decoded = await decodeTile(arrayBuffer(data), size, hash(data));
+    const decoded = await decodeTile(arrayBuffer(data), size);
     assert.deepEqual(decoded.colors, new Uint8Array(colors));
     assert.equal(decoded.coverage.length, Math.ceil((size / 16) ** 2 / 8));
   }
   const empty = tile(16, 0, false);
-  assert.ok((await decodeTile(arrayBuffer(empty), 16, hash(empty))).colors.every((color) => color === 0));
+  assert.ok((await decodeTile(arrayBuffer(empty), 16)).colors.every((color) => color === 0));
 });
 
-test("rejects truncation, trailing bytes, wrong magic, size, version and content hash", async () => {
+test("rejects truncation, trailing bytes, wrong magic, size, version and invalid gzip", async () => {
   const good = tile();
   for (const length of [0, 8]) {
-    await assert.rejects(decodeTile(new ArrayBuffer(length), 16, hash(good)), /length/);
+    await assert.rejects(decodeTile(new ArrayBuffer(length), 16), /length/);
   }
   for (const length of [good.length - 1, good.length + 1]) {
     const awkward = Buffer.alloc(length);
     good.copy(awkward, 0, 0, Math.min(length, good.length));
-    await assert.rejects(decodeTile(arrayBuffer(awkward), 16, hash(awkward)), /length|gzip/);
+    await assert.rejects(decodeTile(arrayBuffer(awkward), 16), /length|gzip/);
   }
   for (const offset of [0, 3, 4, 8]) {
     const data = Buffer.from(good);
     data[offset] ^= 1;
-    await assert.rejects(decodeTile(arrayBuffer(data), 16, hash(data)), /magic, version or size/);
+    await assert.rejects(decodeTile(arrayBuffer(data), 16), /magic, version or size/);
   }
   const damaged = Buffer.from(good);
   damaged[16] ^= 1;
-  await assert.rejects(decodeTile(arrayBuffer(damaged), 16, hash(good)), /SHA-256 mismatch/);
+  await assert.rejects(decodeTile(arrayBuffer(damaged), 16), /Invalid tile gzip payload/);
 });
 
-test("rejects uncovered terrain and reserved coverage bits even with a valid hash", async () => {
+test("rejects uncovered terrain and reserved coverage bits", async () => {
   const terrain = tile(16, 5, false);
-  await assert.rejects(decodeTile(arrayBuffer(terrain), 16, hash(terrain)), /uncovered chunk/);
+  await assert.rejects(decodeTile(arrayBuffer(terrain), 16), /uncovered chunk/);
   const colors = Buffer.alloc(16 * 16, 5);
   const coverage = Buffer.from([0x81]);
   const reserved = encodeTile(16, colors, coverage);
-  await assert.rejects(decodeTile(arrayBuffer(reserved), 16, hash(reserved)), /unused chunk coverage/);
+  await assert.rejects(decodeTile(arrayBuffer(reserved), 16), /unused chunk coverage/);
 });

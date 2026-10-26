@@ -69,5 +69,8 @@ export function fixture(name) {
   if (name === "corrupt") {
     for (const data of files.values()) data[16] ^= 1;
   }
+  if (name === "mismatched-hash") {
+    for (const file of files.keys()) files.set(file, tile(size, 4));
+  }
   return { metadata, files };
 }

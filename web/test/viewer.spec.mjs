@@ -12,9 +12,9 @@ test.afterEach(({ page }) => {
   expect(unhandled.get(page)).toEqual([]);
 });
 
-async function mount(page, scenario = "basic", options = {}, width = 16, height = 16) {
+async function mount(page, scenario = "basic", options = {}, width = 16, height = 16, url = "/") {
   const id = randomUUID();
-  await page.goto("/");
+  await page.goto(url);
   await page.evaluate(async ({ scenario, id, options, width, height }) => {
     const { Map } = await import("/dist/index.js");
     const canvas = document.querySelector("canvas");
@@ -68,6 +68,23 @@ test("uses the indexed tile size rather than hardcoding 2048", async ({ page }) 
   await mount(page, "large", { initialPosition: { x: 16, y: 16 } }, 32, 32);
   await ready(page);
   expect(await pixel(page, 30, 30)).toEqual([0, 255, 0, 255]);
+});
+
+test("renders over insecure HTTP without Web Crypto or content hash verification", async ({ page }) => {
+  await page.route("http://plain-http.test:4174/**", async (route) => {
+    const url = new URL(route.request().url());
+    url.hostname = "127.0.0.1";
+    const response = await route.fetch({ url: url.href });
+    await route.fulfill({ response });
+  });
+  await mount(page, "mismatched-hash", {}, 16, 16, "http://plain-http.test:4174/");
+  expect(await page.evaluate(() => ({
+    secure: isSecureContext,
+    webCrypto: typeof globalThis.crypto?.subtle,
+  }))).toEqual({ secure: false, webCrypto: "undefined" });
+  await ready(page);
+  expect(await pixel(page)).toEqual([255, 0, 0, 255]);
+  expect(await page.evaluate(() => mapErrors)).toEqual([]);
 });
 
 test("uses nearest-neighbor scaling without introducing blended pixel colors", async ({ page }) => {
@@ -179,7 +196,7 @@ test("movable=false disables drag and a fixed scale range disables wheel zoom", 
   expect(await page.evaluate(() => changes)).toBe(0);
 });
 
-for (const [scenario, message] of [["http-error", "HTTP 503"], ["corrupt", "SHA-256 mismatch"]]) {
+for (const [scenario, message] of [["http-error", "HTTP 503"], ["corrupt", "Invalid tile gzip payload"]]) {
   test(`notifies and visibly marks ${scenario} rather than silently showing void`, async ({ page, request }) => {
     const id = await mount(page, scenario);
     await expect.poll(() => page.evaluate(() => mapErrors.length)).toBe(1);
@@ -299,7 +316,7 @@ test("renders Rust output against all native reference RGBA pixels and coverage 
       const size = metadata.tileSize;
       if (tile.x * size >= 2048 || tile.z * size >= 2048 || (tile.x + 1) * size <= 0 || (tile.z + 1) * size <= 0) continue;
       const buffer = await (await fetch(`/real/${tile.hash}.mpt`)).arrayBuffer();
-      const decoded = await decodeTile(buffer, size, tile.hash);
+      const decoded = await decodeTile(buffer, size);
       const side = size / 16;
       for (let z = 0; z < side; z++) {
         for (let x = 0; x < side; x++) {
