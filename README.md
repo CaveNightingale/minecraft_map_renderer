@@ -71,3 +71,21 @@ Each MAP file (`index.map`) contains a JSON object with the following structure:
 - `tile_size` is the size of each tile in pixels.
 - `palette` is the color (ARGB) for each color id used in the map tiles.
 - `tiles` is an array of tile metadata, where each tile has `x` and `z` coordinates and a `hash` corresponding to the `<hash>.mpt` file.
+
+## Render.sh script
+
+There is a template of the render script available in this repository as `render.sh`. You can modify it according to your server setup and preferences.
+
+Things you may like to modify include the server directory, path to the blockstate registry, and output directory for the rendered maps.
+
+## License
+
+The code in this repository is dedicated to the public domain under
+[CC0 1.0 Universal](LICENSE). Third-party components keep their own licenses;
+see [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md) for the full list and the
+notices you must keep when you redistribute a binary.
+
+This project is not affiliated with, endorsed by or sponsored by Mojang Studios
+or Microsoft. *Minecraft* is a trademark of Mojang Synergies AB. No Minecraft
+code or assets are distributed here, and the CC0 dedication does not extend to
+them. You need a legitimate copy of the game to use the exporter.

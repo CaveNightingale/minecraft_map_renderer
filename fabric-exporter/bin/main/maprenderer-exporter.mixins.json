@@ -1,9 +1,0 @@
-{
-  "required": true,
-  "package": "dev.maprenderer.exporter.mixin",
-  "compatibilityLevel": "JAVA_25",
-  "mixins": ["MapItemMixin"],
-  "injectors": {
-    "defaultRequire": 1
-  }
-}

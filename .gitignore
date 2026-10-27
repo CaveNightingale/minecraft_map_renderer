@@ -8,3 +8,5 @@
 /web/playwright-report/
 /web/*.tgz
 /.vscode/*
+/fabric-exporter/bin/
+/fabric-exporter/logs/

@@ -2,6 +2,7 @@
 name = "minecraft_map_renderer"
 version = "0.1.0"
 edition = "2024"
+license = "CC0-1.0"
 
 [[bin]]
 name = "minecraft-map-renderer"
